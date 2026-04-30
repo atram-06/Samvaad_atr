@@ -95,5 +95,4 @@ Designed for performance, scalability, and a smooth user experience.
 
 ---
 
-## 📁 Folder Structure
 
