@@ -1,0 +1,23 @@
+.feed-container {
+    max-width: 630px;
+    /* Match Instagram feed width */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+    /* Center the feed */
+}
+
+.feed-posts {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 20px;
+    width: 100%;
+}
+
+@media (max-width: 640px) {
+    .feed-container {
+        padding-top: 0;
+    }
+}

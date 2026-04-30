@@ -1,0 +1,129 @@
+.sidebar {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px 12px;
+    width: 100%;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap');
+
+.sidebar-logo {
+    font-family: 'Grand Hotel', cursive;
+    font-size: 2rem;
+    font-weight: 500;
+    margin: 0;
+    letter-spacing: 1px;
+    color: var(--text-color);
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 12px;
+    text-decoration: none;
+    color: var(--text-color);
+    font-size: 1.1rem;
+    border-radius: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.3s;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar-icon {
+    font-size: 26px;
+    min-width: 26px;
+}
+
+.sidebar-text {
+    font-weight: 400;
+    font-size: 1.1rem;
+    opacity: 1;
+    transition: opacity 0.2s;
+}
+
+.sidebar-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Narrow Mode (Search Open) */
+.sidebar.narrow {
+    width: 72px;
+}
+
+.sidebar.narrow .sidebar-text {
+    display: none;
+    opacity: 0;
+}
+
+.sidebar.narrow .sidebar-link {
+    justify-content: center;
+    padding: 12px 0;
+}
+
+.sidebar.narrow .sidebar-logo-container {
+    display: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 72px;
+        padding: 8px;
+    }
+
+    .sidebar-text,
+    .sidebar-logo {
+        display: none;
+    }
+
+    .sidebar-link {
+        justify-content: center;
+        padding: 12px 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar {
+        display: none;
+    }
+}
+
+.icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #ff3040;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    height: 16px;
+    min-width: 16px;
+    padding: 0 4px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg-color);
+}

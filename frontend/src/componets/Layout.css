@@ -1,0 +1,119 @@
+/* Layout.css */
+.app-layout {
+    height: 100vh;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Prevent body scroll */
+}
+
+/* Navbar is fixed at top */
+.mobile-nav {
+    display: block;
+    height: 60px;
+    flex-shrink: 0;
+    z-index: 1000;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+}
+
+.main-container {
+    display: grid;
+    grid-template-columns: 245px 1fr 320px;
+    /* Sidebar | Feed | Suggestions */
+    gap: 0;
+    height: calc(100vh - 60px);
+    /* Full height minus navbar */
+    max-width: 1440px;
+    /* Increased max width for better spacing */
+    margin: 0 auto;
+    width: 100%;
+    position: relative;
+}
+
+/* Sidebar Column */
+.sidebar-container {
+    border-right: 1px solid var(--border-color);
+    height: 100%;
+    overflow-y: auto;
+    position: relative;
+    z-index: 10;
+    background-color: var(--bg-color);
+}
+
+/* Center Content Area (Feed) */
+.content-area {
+    height: 100%;
+    overflow-y: auto;
+    /* Independent scroll */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+    min-width: 0;
+    /* Prevent grid blowout */
+    background-color: var(--bg-color);
+    position: relative;
+    z-index: 1;
+    /* Hide scrollbar for cleaner look */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.content-area::-webkit-scrollbar {
+    display: none;
+}
+
+.content-area.search-active {
+    /* Adjust if needed when search is active */
+}
+
+.content-area.no-right-sidebar {
+    grid-column: 2 / 4;
+    /* Span across right sidebar space */
+    margin-right: 0;
+}
+
+/* Right Sidebar Column */
+/* Handled in RightSidebar.css, but ensure it's in the grid */
+
+@media (max-width: 1000px) {
+    .main-container {
+        grid-template-columns: 72px 1fr;
+        /* Collapsed sidebar | Feed */
+    }
+
+    .right-sidebar {
+        display: none;
+        /* Hide right sidebar */
+    }
+
+    .content-area.no-right-sidebar {
+        grid-column: 2 / 3;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-container {
+        grid-template-columns: 1fr;
+        /* Single column */
+    }
+
+    .sidebar-container {
+        display: none;
+        /* Hide sidebar on mobile (bottom nav usually) */
+    }
+
+    .content-area {
+        width: 100%;
+        padding: 10px;
+    }
+}
+.content-area.no-padding {
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+
