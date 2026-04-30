@@ -1,0 +1,22 @@
+node_modules
+.env
+dist
+build
+coverage
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+*.so
+
+# Databases / uploads / generated
+*.sqlite
+backend/social_app.sqlite
+backend/database.sqlite
+backend/uploads/
+backend/uploads/profiles/
+frontend/.env

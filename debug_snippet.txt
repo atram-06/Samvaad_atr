@@ -1,0 +1,16 @@
+// Simple test to check what the Profile page receives
+// Add this temporarily to Profile.jsx after setPosts(postsData)
+
+useEffect(() => {
+    if (posts.length > 0) {
+        console.log('=== PROFILE PAGE DEBUG ===');
+        console.log('Total posts loaded:', posts.length);
+        console.log('Posts by category:');
+        const cats = {};
+        posts.forEach(p => {
+            cats[p.category] = (cats[p.category] || 0) + 1;
+        });
+        console.log(cats);
+        console.log('All posts:', posts.map(p => ({ id: p.id, category: p.category, mediaUrl: p.mediaUrl })));
+    }
+}, [posts]);

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Messaging Test</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .user-window {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .user-window h2 {
+            margin-top: 0;
+            color: #1877f2;
+            border-bottom: 2px solid #1877f2;
+            padding-bottom: 10px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: #fafafa;
+        }
+        .message {
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 18px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .message.sent {
+            background: #0084ff;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        .message.received {
+            background: #e4e6eb;
+            color: #050505;
+        }
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        button {
+            padding: 12px 24px;
+            background: #1877f2;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #166fe5;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .typing-indicator {
+            font-style: italic;
+            color: #65676b;
+            font-size: 13px;
+            min-height: 20px;
+            padding: 5px 0;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+        .online-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .online-status.online {
+            background: #44b700;
+        }
+        .online-status.offline {
+            background: #999;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Real-Time Messaging Test - WhatsApp Style</h1>
+    <p style="text-align: center; color: #666;">Test real-time messaging between two users</p>
+
+    <div class="container">
+        <!-- User 1 Window -->
+        <div class="user-window">
+            <h2>👤 User 1 (testuser1)</h2>
+            <div id="status1" class="status disconnected">Disconnected</div>
+            <div class="info">
+                <strong>User ID:</strong> <span id="userId1">-</span><br>
+                <strong>Socket ID:</strong> <span id="socketId1">-</span><br>
+                <strong>Other User Status:</strong> 
+                <span class="online-status" id="otherStatus1"></span>
+                <span id="otherStatusText1">Unknown</span>
+            </div>
+            <div class="typing-indicator" id="typing1"></div>
+            <div class="messages" id="messages1"></div>
+            <div class="input-area">
+                <input type="text" id="input1" placeholder="Type a message..." disabled>
+                <button id="send1" disabled>Send</button>
+            </div>
+        </div>
+
+        <!-- User 2 Window -->
+        <div class="user-window">
+            <h2>👤 User 2 (testuser2)</h2>
+            <div id="status2" class="status disconnected">Disconnected</div>
+            <div class="info">
+                <strong>User ID:</strong> <span id="userId2">-</span><br>
+                <strong>Socket ID:</strong> <span id="socketId2">-</span><br>
+                <strong>Other User Status:</strong> 
+                <span class="online-status" id="otherStatus2"></span>
+                <span id="otherStatusText2">Unknown</span>
+            </div>
+            <div class="typing-indicator" id="typing2"></div>
+            <div class="messages" id="messages2"></div>
+            <div class="input-area">
+                <input type="text" id="input2" placeholder="Type a message..." disabled>
+                <button id="send2" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+        
+        // User credentials
+        const users = {
+            user1: { username: 'testuser1', password: 'test123', id: 13 },
+            user2: { username: 'testuser2', password: 'test123', id: 14 }
+        };
+
+        let sockets = {};
+        let tokens = {};
+        let conversationId = null;
+
+        // Login and connect
+        async function loginAndConnect(userKey) {
+            try {
+                const user = users[userKey];
+                
+                // Login
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user.username, password: user.password })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Login failed');
+                }
+
+                const data = await response.json();
+                tokens[userKey] = data.token;
+                users[userKey].actualId = data.user.id;
+
+                // Connect socket
+                const socket = io(API_URL, {
+                    auth: { token: data.token }
+                });
+
+                sockets[userKey] = socket;
+
+                const userNum = userKey === 'user1' ? '1' : '2';
+                const otherUserNum = userKey === 'user1' ? '2' : '1';
+
+                socket.on('connect', () => {
+                    document.getElementById(`status${userNum}`).className = 'status connected';
+                    document.getElementById(`status${userNum}`).textContent = 'Connected ✓';
+                    document.getElementById(`userId${userNum}`).textContent = users[userKey].actualId;
+                    document.getElementById(`socketId${userNum}`).textContent = socket.id;
+                    document.getElementById(`input${userNum}`).disabled = false;
+                    document.getElementById(`send${userNum}`).disabled = false;
+                });
+
+                socket.on('connect_error', (err) => {
+                    console.error(`${userKey} connection error:`, err);
+                    document.getElementById(`status${userNum}`).className = 'status disconnected';
+                    document.getElementById(`status${userNum}`).textContent = 'Error: ' + err.message;
+                });
+
+                socket.on('message:new', (message) => {
+                    console.log(`${userKey} received message:`, message);
+                    addMessage(userNum, message.text, message.senderId === users[userKey].actualId ? 'sent' : 'received');
+                    
+                    // Save conversation ID
+                    if (message.conversationId) {
+                        conversationId = message.conversationId;
+                    }
+
+                    // Stop typing indicator
+                    document.getElementById(`typing${userNum}`).textContent = '';
+                });
+
+                socket.on('typing:start', (data) => {
+                    if (data.userId !== users[userKey].actualId) {
+                        document.getElementById(`typing${userNum}`).textContent = 'Typing...';
+                    }
+                });
+
+                socket.on('typing:stop', (data) => {
+                    if (data.userId !== users[userKey].actualId) {
+                        document.getElementById(`typing${userNum}`).textContent = '';
+                    }
+                });
+
+                socket.on('presence:update', (data) => {
+                    const otherUserId = userKey === 'user1' ? users.user2.actualId : users.user1.actualId;
+                    if (data.userId === otherUserId) {
+                        const statusEl = document.getElementById(`otherStatus${userNum}`);
+                        const textEl = document.getElementById(`otherStatusText${userNum}`);
+                        if (data.status === 'online') {
+                            statusEl.className = 'online-status online';
+                            textEl.textContent = 'Online';
+                        } else {
+                            statusEl.className = 'online-status offline';
+                            textEl.textContent = 'Offline';
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error(`${userKey} error:`, error);
+                const userNum = userKey === 'user1' ? '1' : '2';
+                document.getElementById(`status${userNum}`).className = 'status disconnected';
+                document.getElementById(`status${userNum}`).textContent = 'Error: ' + error.message;
+            }
+        }
+
+        function addMessage(userNum, text, type) {
+            const messagesDiv = document.getElementById(`messages${userNum}`);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            messageDiv.innerHTML = `
+                ${text}
+                <div class="message-time">${time}</div>
+            `;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function sendMessage(userKey) {
+            const userNum = userKey === 'user1' ? '1' : '2';
+            const otherUserKey = userKey === 'user1' ? 'user2' : 'user1';
+            const input = document.getElementById(`input${userNum}`);
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            const socket = sockets[userKey];
+            const receiverId = users[otherUserKey].actualId;
+
+            console.log(`${userKey} sending message to ${receiverId}:`, text);
+
+            socket.emit('message:new', {
+                conversationId: conversationId,
+                receiverId: receiverId,
+                text: text
+            }, (ack) => {
+                console.log(`${userKey} message ack:`, ack);
+                if (ack.status === 'ok') {
+                    addMessage(userNum, text, 'sent');
+                    if (ack.data.conversationId) {
+                        conversationId = ack.data.conversationId;
+                    }
+                } else {
+                    alert('Failed to send message: ' + (ack.error || 'Unknown error'));
+                }
+            });
+
+            input.value = '';
+        }
+
+        function handleTyping(userKey) {
+            const socket = sockets[userKey];
+            if (!socket || !conversationId) return;
+
+            socket.emit('typing:start', { conversationId });
+
+            clearTimeout(window[`typingTimeout${userKey}`]);
+            window[`typingTimeout${userKey}`] = setTimeout(() => {
+                socket.emit('typing:stop', { conversationId });
+            }, 2000);
+        }
+
+        // Setup event listeners
+        document.getElementById('send1').addEventListener('click', () => sendMessage('user1'));
+        document.getElementById('input1').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage('user1');
+        });
+        document.getElementById('input1').addEventListener('input', () => handleTyping('user1'));
+
+        document.getElementById('send2').addEventListener('click', () => sendMessage('user2'));
+        document.getElementById('input2').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage('user2');
+        });
+        document.getElementById('input2').addEventListener('input', () => handleTyping('user2'));
+
+        // Initialize
+        window.addEventListener('load', async () => {
+            console.log('Initializing test...');
+            await loginAndConnect('user1');
+            await loginAndConnect('user2');
+            console.log('Both users connected!');
+        });
+    </script>
+</body>
+</html>
